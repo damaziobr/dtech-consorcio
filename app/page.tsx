@@ -25,6 +25,18 @@ export default function Home() {
     );
   }
 
+  // 🔥 AUTO SELECIONA DIA INICIAL
+  useEffect(() => {
+    if (!dataInicio) return;
+
+    const dia = new Date(dataInicio).getDay();
+
+    if (frequencia === "dias") {
+      setDiasSelecionados([dia]);
+    }
+  }, [dataInicio, frequencia]);
+
+  // 🔥 GERAÇÃO DA TABELA (CORRIGIDA)
   useEffect(() => {
     if (!dataInicio) return;
 
@@ -33,8 +45,11 @@ export default function Home() {
 
     let dataAtual = new Date(dataInicio);
     let contador = 1;
+    let tentativas = 0;
 
-    while (contador <= cotas) {
+    while (contador <= cotas && tentativas < 500) {
+      tentativas++;
+
       let incluir = false;
 
       if (frequencia === "diario") incluir = true;
@@ -55,6 +70,11 @@ export default function Home() {
       }
 
       if (frequencia === "dias") {
+        if (diasSelecionados.length === 0) {
+          setResultado("⚠️ Selecione pelo menos um dia da semana");
+          return;
+        }
+
         incluir = diasSelecionados.includes(dataAtual.getDay());
       }
 
@@ -101,7 +121,6 @@ export default function Home() {
     <main className="min-h-screen bg-gray-100 flex justify-center p-6 text-gray-900">
       <div className="w-full max-w-xl">
 
-        {/* TOPO */}
         <div className="text-center mb-6">
           <div className="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm mb-2">
             Gerador de Tabela
@@ -116,7 +135,6 @@ export default function Home() {
           </p>
         </div>
 
-        {/* CARD */}
         <div className="bg-white rounded-2xl shadow p-6 space-y-4 text-gray-900">
 
           <div>
@@ -172,7 +190,6 @@ export default function Home() {
             />
           </div>
 
-          {/* FREQUÊNCIA */}
           <div>
             <label className="text-sm font-medium">Frequência</label>
             <select
@@ -188,7 +205,6 @@ export default function Home() {
             </select>
           </div>
 
-          {/* INTERVALO */}
           {frequencia === "intervalo" && (
             <input
               type="number"
@@ -199,13 +215,13 @@ export default function Home() {
             />
           )}
 
-          {/* DIAS */}
           {frequencia === "dias" && (
             <div className="flex flex-wrap gap-2">
               {diasSemana.map((dia, i) => (
                 <label key={i} className="flex items-center gap-1 text-sm">
                   <input
                     type="checkbox"
+                    checked={diasSelecionados.includes(i)}
                     onChange={() => toggleDia(i)}
                   />
                   {dia}
@@ -215,7 +231,6 @@ export default function Home() {
           )}
         </div>
 
-        {/* RESULTADO */}
         {resultado && (
           <div className="bg-white rounded-2xl shadow mt-6 p-4 text-gray-900">
             <div className="flex justify-between mb-2">
