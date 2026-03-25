@@ -25,7 +25,7 @@ export default function Home() {
     );
   }
 
-  // 🔥 AUTO SELECIONA DIA INICIAL
+  // 🔥 auto selecionar dia inicial
   useEffect(() => {
     if (!dataInicio) return;
 
@@ -36,37 +36,34 @@ export default function Home() {
     }
   }, [dataInicio, frequencia]);
 
-  // 🔥 GERAÇÃO DA TABELA (CORRIGIDA)
   useEffect(() => {
     if (!dataInicio) return;
 
     let texto = `📊 *d! Tech Soluções - Tabela de Consórcio*\n\n`;
     if (descricao) texto += `${descricao}\n\n`;
 
-    let dataAtual = new Date(dataInicio);
+    const base = new Date(dataInicio);
+
     let contador = 1;
-    let tentativas = 0;
 
-    while (contador <= cotas && tentativas < 500) {
-      tentativas++;
-
-      let incluir = false;
-
-      if (frequencia === "diario") incluir = true;
+    // 🔥 SEM LOOP PESADO
+    while (contador <= cotas) {
+      let data = new Date(base);
 
       if (frequencia === "semanal") {
-        incluir =
-          contador === 1 ||
-          dataAtual.getDay() === new Date(dataInicio).getDay();
+        data.setDate(base.getDate() + (contador - 1) * 7);
       }
 
-      if (frequencia === "intervalo") {
-        incluir = true;
+      if (frequencia === "diario") {
+        data.setDate(base.getDate() + (contador - 1));
       }
 
       if (frequencia === "mensal") {
-        incluir =
-          dataAtual.getDate() === new Date(dataInicio).getDate();
+        data.setMonth(base.getMonth() + (contador - 1));
+      }
+
+      if (frequencia === "intervalo") {
+        data.setDate(base.getDate() + (contador - 1) * intervaloDias);
       }
 
       if (frequencia === "dias") {
@@ -75,28 +72,37 @@ export default function Home() {
           return;
         }
 
-        incluir = diasSelecionados.includes(dataAtual.getDay());
+        let encontrada = false;
+        let temp = new Date(base);
+
+        let tentativas = 0;
+
+        while (!encontrada && tentativas < 365) {
+          if (diasSelecionados.includes(temp.getDay())) {
+            encontrada = true;
+            data = new Date(temp);
+          }
+
+          temp.setDate(temp.getDate() + 1);
+          tentativas++;
+        }
+
+        if (!encontrada) break;
+
+        base.setDate(data.getDate() + 1);
       }
 
-      if (incluir) {
-        const valor = valorInicial + (contador - 1) * incremento;
-        const total = valor * (cotas - 1);
+      const valor = valorInicial + (contador - 1) * incremento;
+      const total = valor * (cotas - 1);
 
-        const dia = dataAtual.toLocaleDateString("pt-BR");
-        const semana = diasSemana[dataAtual.getDay()].toUpperCase();
+      const dia = data.toLocaleDateString("pt-BR");
+      const semana = diasSemana[data.getDay()].toUpperCase();
 
-        texto += `${contador}-${dia} (${semana}) R$ ${valor.toFixed(
-          0
-        )} = ${total.toFixed(0)}\n`;
+      texto += `${contador}-${dia} (${semana}) R$ ${valor.toFixed(
+        0
+      )} = ${total.toFixed(0)}\n`;
 
-        contador++;
-      }
-
-      if (frequencia === "intervalo") {
-        dataAtual.setDate(dataAtual.getDate() + intervaloDias);
-      } else {
-        dataAtual.setDate(dataAtual.getDate() + 1);
-      }
+      contador++;
     }
 
     texto += `\n📌 _Tabela gerada por d! Tech Soluções_`;
@@ -137,73 +143,55 @@ export default function Home() {
 
         <div className="bg-white rounded-2xl shadow p-6 space-y-4 text-gray-900">
 
-          <div>
-            <label className="text-sm font-medium">Descrição</label>
-            <input
-              className="w-full border rounded-lg p-2 mt-1"
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-            />
-          </div>
+          <input
+            placeholder="Descrição"
+            className="w-full border rounded-lg p-2"
+            value={descricao}
+            onChange={(e) => setDescricao(e.target.value)}
+          />
 
-          <div>
-            <label className="text-sm font-medium">Número de cotas</label>
-            <input
-              type="number"
-              className="w-full border rounded-lg p-2 mt-1"
-              value={cotas}
-              onChange={(e) => setCotas(Number(e.target.value))}
-            />
-          </div>
+          <input
+            type="number"
+            placeholder="Número de cotas"
+            className="w-full border rounded-lg p-2"
+            value={cotas}
+            onChange={(e) => setCotas(Number(e.target.value))}
+          />
 
-          <div>
-            <label className="text-sm font-medium">
-              Valor inicial (R$)
-            </label>
-            <input
-              type="number"
-              className="w-full border rounded-lg p-2 mt-1"
-              value={valorInicial}
-              onChange={(e) => setValorInicial(Number(e.target.value))}
-            />
-          </div>
+          <input
+            type="number"
+            placeholder="Valor inicial"
+            className="w-full border rounded-lg p-2"
+            value={valorInicial}
+            onChange={(e) => setValorInicial(Number(e.target.value))}
+          />
 
-          <div>
-            <label className="text-sm font-medium">
-              Incremento (R$)
-            </label>
-            <input
-              type="number"
-              className="w-full border rounded-lg p-2 mt-1"
-              value={incremento}
-              onChange={(e) => setIncremento(Number(e.target.value))}
-            />
-          </div>
+          <input
+            type="number"
+            placeholder="Incremento"
+            className="w-full border rounded-lg p-2"
+            value={incremento}
+            onChange={(e) => setIncremento(Number(e.target.value))}
+          />
 
-          <div>
-            <label className="text-sm font-medium">Data de início</label>
-            <input
-              type="date"
-              className="w-full border rounded-lg p-2 mt-1"
-              value={dataInicio}
-              onChange={(e) => setDataInicio(e.target.value)}
-            />
-          </div>
+          <input
+            type="date"
+            className="w-full border rounded-lg p-2"
+            value={dataInicio}
+            onChange={(e) => setDataInicio(e.target.value)}
+          />
 
-          <div>
-            <label className="text-sm font-medium">Frequência</label>
-            <select
-              className="w-full border rounded-lg p-2 mt-1"
-              value={frequencia}
-              onChange={(e) => setFrequencia(e.target.value)}
-            >
-              <option value="semanal">Semanal</option>
-              <option value="diario">Diário</option>
-              <option value="intervalo">A cada X dias</option>
-              <option value="mensal">Mensal</option>
-              <option value="dias">Dias específicos</option>
-            </select>
-          </div>
+          <select
+            className="w-full border rounded-lg p-2"
+            value={frequencia}
+            onChange={(e) => setFrequencia(e.target.value)}
+          >
+            <option value="semanal">Semanal</option>
+            <option value="diario">Diário</option>
+            <option value="intervalo">A cada X dias</option>
+            <option value="mensal">Mensal</option>
+            <option value="dias">Dias específicos</option>
+          </select>
 
           {frequencia === "intervalo" && (
             <input
